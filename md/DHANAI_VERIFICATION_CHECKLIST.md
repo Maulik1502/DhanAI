@@ -13,43 +13,46 @@
 
 - **Total Use Cases**: 11 Modules (35 Test Items)
 - **Completed**: 0 / 35
-- **Current Focus**: **Phase 1: Login & Authentication**
+- **Current Active Focus**: **Phase 1: Login & Phase 2: First-Time Onboarding**
 
 ---
 
-## 🔑 Phase 1: Login & Authentication (CURRENT FOCUS)
+## 🔑 Phase 1: Login & Authentication
 
 - [ ] **UC-1.1: Login Page UI Rendering**
-  - Navigate to [http://localhost:3000/login](http://localhost:3000/login)
-  - Verify hero banner, features summary, SEBI badge, and buttons render cleanly.
+  - Open [http://localhost:3000/login](http://localhost:3000/login)
+  - Verify hero title ("Manage every rupee intelligently"), SEBI badge, value proposition cards, Google Sign-In & Demo buttons render correctly.
 - [ ] **UC-1.2: Demo Account Preview Mode**
   - Click **"Preview Demo Account"** button on `/login`.
-  - Verify instant redirection to `/onboarding` or `/dashboard` with pre-filled demo context.
-- [ ] **UC-1.3: Google OAuth Sign-In**
-  - Click **"Sign in with Google"** on `/login`.
-  - Verify Google login consent screen opens and authenticates properly.
+  - Verify instant redirection to `/onboarding` (for new users) or `/dashboard` (for existing users).
+- [ ] **UC-1.3: Google OAuth 2.0 Sign-In**
+  - Click **"Sign in with Google"** button on `/login`.
+  - Verify NextAuth Google sign-in prompt opens.
 - [ ] **UC-1.4: Middleware Route Guarding**
-  - Try opening [http://localhost:3000/dashboard](http://localhost:3000/dashboard) without logging in.
-  - Verify automatic redirect back to `/login`.
-- [ ] **UC-1.5: Logout & Session Destruction**
-  - Click **Logout** from user profile / header.
-  - Verify session token is cleared and redirected back to `/login`.
+  - Open [http://localhost:3000/dashboard](http://localhost:3000/dashboard) without a session token.
+  - Verify middleware automatically redirects back to `/login`.
 
 ---
 
-## 🚀 Phase 2: User Onboarding Flow
+## 🚀 Phase 2: First-Time Login (Onboarding Flow)
 
-- [ ] **UC-2.1: Step 1 — Basic Information & Salary Input**
-  - Input Name, Age, Target Retirement, and Monthly Take-Home Salary.
-- [ ] **UC-2.2: Step 2 — Expense Profiling**
-  - Input Housing, Food, EMIs, Utilities, and Discretionary Expenses.
-- [ ] **UC-2.3: Step 3 — Current Savings & Asset Mapping**
-  - Input Savings Account Balance, FD, Mutual Funds, Stocks, EPF.
-- [ ] **UC-2.4: Step 4 — Risk Tolerance & Tax Regime**
-  - Select Risk Profile (Conservative / Moderate / Aggressive) and Old vs New Tax Regime.
-- [ ] **UC-2.5: Step 5 — Baseline Calculation & DB Write**
-  - Review summary and submit onboarding.
-  - Verify `user.onboarded = true` flag set in DB and redirect to `/dashboard`.
+- [ ] **UC-2.1: Step 1 — Product Tour & Core Capabilities**
+  - On `/onboarding`, review 3 capability cards (Autonomous Money Engine, Multi-Account Networth Wallet, Reverse Goal SIP Engine).
+  - Click **"Continue"**.
+- [ ] **UC-2.2: Step 2 — Investor Profile Setup**
+  - Enter Investor Name, Date of Birth, Occupation, and select Risk Profile (Conservative / Moderate / Aggressive).
+  - Verify validation prevents continuing if Name is empty.
+  - Click **"Continue"**.
+- [ ] **UC-2.3: Step 3 — SEBI Disclaimer & Terms Compliance**
+  - Review SEBI Educational Notice and Terms of Service.
+  - Check both mandatory checkboxes (Terms Agreement & SEBI Disclaimer).
+  - Verify **"Continue"** button is disabled until both checkboxes are checked.
+  - Click **"Continue"**.
+- [ ] **UC-2.4: Step 4 — Launch Portal & Database Save**
+  - View completion confirmation screen.
+  - Click **"Launch DhanAI Workspace"**.
+  - Verify API PATCH to `/api/user` updates database (`onboarded = true`) and redirects to `/dashboard`.
+
 
 ---
 
