@@ -1,0 +1,448 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  name       String?
+  avatar     String?
+  googleId   String?   @unique
+  riskLevel  RiskLevel @default(MODERATE)
+  taxRegime  TaxRegime @default(NEW)
+  occupation  String?
+  dateOfBirth DateTime?
+  age         Int?
+  dependents  Int       @default(0)
+  onboarded  Boolean   @default(false)
+  plan       UserPlan  @default(FREE)
+  role       UserRole  @default(USER)
+
+  accounts      Account[]
+  sessions      Session[]
+  incomes       Income[]
+  expenses      Expense[]
+  goals         Goal[]
+  investments   Investment[]
+  insurances    Insurance[]
+  alerts        Alert[]
+  chatMessages  ChatMessage[]
+  emergencyFund EmergencyFund?
+  corpus        Corpus?
+  taxProfile    TaxProfile?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Income {
+  id        String     @id @default(cuid())
+  userId    String
+  type      IncomeType
+  name      String
+  amount    Float
+  frequency Frequency  @default(MONTHLY)
+  isActive  Boolean    @default(true)
+  note      String?
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("incomes")
+}
+
+model Expense {
+  id            String          @id @default(cuid())
+  userId        String
+  category      ExpenseCategory
+  name          String
+  amount        Float
+  frequency     Frequency       @default(MONTHLY)
+  isEMI         Boolean         @default(false)
+  emiMonthsLeft Int?
+  emiStartDate  DateTime?
+  loanType      String?
+  bankName      String?
+  isActive      Boolean         @default(true)
+  note          String?
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, isEMI])
+  @@map("expenses")
+}
+
+model Goal {
+  id             String     @id @default(cuid())
+  userId         String
+  name           String
+  emoji          String     @default("goal")
+  targetAmount   Float
+  currentAmount  Float      @default(0)
+  deadline       DateTime
+  monthlySIP     Float
+  instrument     String
+  schemeCode     String?
+  schemeName     String?
+  expectedReturn Float      @default(7.5)
+  priority       Int        @default(1)
+  status         GoalStatus @default(ACTIVE)
+  aiSuggestion   String?    @db.Text
+  completedAt    DateTime?
+  note           String?
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, status])
+  @@map("goals")
+}
+
+model Investment {
+  id           String           @id @default(cuid())
+  userId       String
+  type         InvestmentType
+  name         String
+  schemeCode   String?
+  symbol       String?
+  amount       Float
+  units        Float?
+  buyPrice     Float?
+  currentValue Float?
+  returns      Float?           @default(0)
+  startDate    DateTime
+  maturityDate DateTime?
+  status       InvestmentStatus @default(ACTIVE)
+  goalId       String?
+  isCorpus     Boolean          @default(false)
+  note         String?
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, type])
+  @@map("investments")
+}
+
+model EmergencyFund {
+  id            String     @id @default(cuid())
+  userId        String     @unique
+  targetAmount  Float
+  currentAmount Float      @default(0)
+  instrument    String     @default("Liquid Mutual Fund")
+  schemeCode    String?
+  schemeName    String?
+  status        FundStatus @default(BUILDING)
+  monthsCovered Float      @default(0)
+  monthlyAlloc  Float      @default(0)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("emergency_funds")
+}
+
+model Insurance {
+  id          String            @id @default(cuid())
+  userId      String
+  type        InsuranceType
+  provider    String?
+  coverAmount Float
+  premium     Float
+  frequency   Frequency         @default(YEARLY)
+  priority    InsurancePriority
+  status      InsuranceStatus   @default(SUGGESTED)
+  reason      String            @db.Text
+  nextDueDate DateTime?
+  policyNo    String?
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("insurances")
+}
+
+model TaxProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  regime            TaxRegime @default(NEW)
+  grossIncome       Float     @default(0)
+  taxableIncome     Float     @default(0)
+  taxLiability      Float     @default(0)
+  deductions80C     Float     @default(0)
+  deductions80D     Float     @default(0)
+  npsAdditional     Float     @default(0)
+  hraDeduction      Float     @default(0)
+  homeLoanInterest  Float     @default(0)
+  otherDeductions   Float     @default(0)
+  taxSaved          Float     @default(0)
+  remainingLimit80C Float     @default(150000)
+  financialYear     String    @default("2025-26")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tax_profiles")
+}
+
+model Corpus {
+  id                String @id @default(cuid())
+  userId            String @unique
+  targetAmount      Float  @default(10000000)
+  currentValue      Float  @default(0)
+  monthlyInvestment Float  @default(0)
+  expectedReturn    Float  @default(11)
+  timelineYears     Int    @default(20)
+  projections       String @db.Text
+  allocation        String @db.Text
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("corpus")
+}
+
+model Alert {
+  id      String    @id @default(cuid())
+  userId  String
+  type    AlertType
+  title   String
+  message String    @db.Text
+  data    String?   @db.Text
+  read    Boolean   @default(false)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, read])
+  @@map("alerts")
+}
+
+model ChatMessage {
+  id      String @id @default(cuid())
+  userId  String
+  role    String
+  content String @db.Text
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("chat_messages")
+}
+
+model MarketData {
+  id        String   @id @default(cuid())
+  type      String
+  code      String
+  name      String
+  data      String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, code])
+  @@index([type])
+  @@map("market_data")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  ipAddress String?
+  metadata  String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RiskLevel {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
+enum TaxRegime {
+  OLD
+  NEW
+}
+enum UserPlan {
+  FREE
+  PRO
+  ELITE
+}
+enum IncomeType {
+  SALARY
+  FREELANCE
+  BUSINESS
+  RENTAL
+  CAPITAL_GAINS
+  DIVIDEND
+  OTHER
+}
+enum Frequency {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  ONE_TIME
+}
+enum ExpenseCategory {
+  RENT
+  FOOD
+  TRANSPORT
+  EMI_HOME
+  EMI_CAR
+  EMI_PERSONAL
+  EMI_EDUCATION
+  INSURANCE
+  SUBSCRIPTION
+  EDUCATION
+  MEDICAL
+  UTILITIES
+  OTHER
+}
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+enum InvestmentType {
+  MUTUAL_FUND
+  STOCK
+  FD
+  BOND
+  PPF
+  NPS
+  SGB
+  ELSS
+  RD
+  OTHER
+}
+enum InvestmentStatus {
+  ACTIVE
+  MATURED
+  SOLD
+}
+enum FundStatus {
+  BUILDING
+  COMPLETE
+  USED
+}
+enum InsuranceType {
+  TERM
+  HEALTH
+  MOTOR
+  HOME
+  LOAN_PROTECTION
+  CRITICAL_ILLNESS
+}
+enum InsurancePriority {
+  CRITICAL
+  RECOMMENDED
+  OPTIONAL
+}
+enum InsuranceStatus {
+  SUGGESTED
+  ACTIVE
+  LAPSED
+}
+enum AlertType {
+  GOAL_COMPLETED
+  GOAL_AT_RISK
+  GOAL_SIP_DUE
+  STOCK_TARGET_HIT
+  STOCK_STOP_LOSS
+  MF_NAV_DROP
+  MF_UNDERPERFORMING
+  FD_MATURITY
+  BOND_MATURITY
+  BETTER_FD_AVAILABLE
+  TAX_SAVING_LIMIT
+  ADVANCE_TAX_DUE
+  FINANCIAL_YEAR_END
+  REBALANCE_NEEDED
+  HIGH_RISK_DETECTED
+  BETTER_OPTION_FOUND
+  EMERGENCY_FUNDED
+  EMERGENCY_USED
+  EMERGENCY_MILESTONE
+  INSURANCE_PREMIUM_DUE
+  INSURANCE_SUGGESTED
+  CORPUS_MILESTONE
+  EMI_COMPLETED
+}
+

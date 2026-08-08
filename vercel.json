@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/scan-market",    "schedule": "*/15 9-15 * * 1-5" },
+    { "path": "/api/cron/check-goals",    "schedule": "0 9 * * *" },
+    { "path": "/api/cron/check-alerts",   "schedule": "0 8 * * *" },
+    { "path": "/api/cron/check-portfolio","schedule": "0 11 1 * *" }
+  ]
+}
